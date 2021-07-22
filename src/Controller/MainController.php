@@ -44,7 +44,7 @@ class MainController extends AbstractController
 
         $reviews = $reviewRepository->findAllReviewByMovie($movie);
         //$reviews = $castingRepository->findAll();
-        $castings = $castingRepository->findAllByMovieJoinedToPerson($movie->getId());
+        $castings = $castingRepository->findAllByMovieJoinedToPerson($movie);
 
         if ($reviews === null) {
             throw $this->createNotFoundException('Aucune critique trouvé.');

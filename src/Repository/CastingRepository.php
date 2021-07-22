@@ -2,9 +2,10 @@
 
 namespace App\Repository;
 
+use App\Entity\Movie;
 use App\Entity\Casting;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @method Casting|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,15 +20,22 @@ class CastingRepository extends ServiceEntityRepository
         parent::__construct($registry, Casting::class);
     }
 
-    public function findAllByMovieJoinedToPerson(int $movieId)
+    public function findAllByMovieJoinedToPerson(Movie $movie)
     {
         $entityManager = $this->getEntityManager();
+
         $query = $entityManager->createQuery(
+            // SELECT c.*, p.*
             'SELECT c, p
-            FROM App\Entity\Casting c 
-            INNER JOIN c.person p
-            WHERE c.movie = :id'
-        )->setParameter('id', $movieId);
+            -- FROM casting AS c
+            FROM App\Entity\Casting AS c
+            -- INNER JOIN person ON c.person_id = person.id
+            INNER JOIN c.person AS p
+            -- WHERE movie_id = 7
+            WHERE c.movie = :movie
+            ORDER BY c.creditOrder'
+        )->setParameter('movie', $movie);
+
         return $query->getResult();
     }
 

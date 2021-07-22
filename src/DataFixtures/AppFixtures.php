@@ -55,7 +55,10 @@ class AppFixtures extends Fixture
 
             $movie = new Movie();
             $movie->setTitle($faker->unique()->movieTitle());
-            $movie->setCreatedAt(new DateTime());
+            $movie->setDuration($faker->numberBetween(15, 360));
+            $movie->setPoster($faker->imageUrl(300, 400));
+            $movie->setRating($faker->numberBetween(1, 5));
+            $movie->setReleaseDate($faker->dateTimeBetween('-50 years'));
 
             // Association de 1 à 3 genres au hasard
             for ($r = 1; $r <= mt_rand(1, 3); $r++) {
