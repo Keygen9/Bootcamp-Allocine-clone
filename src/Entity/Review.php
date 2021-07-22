@@ -21,38 +21,45 @@ class Review
 
     /**
      * @ORM\Column(type="string", length=50)
+     * 
      * @Assert\NotBlank
      */
     private $username;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * 
      * @Assert\NotBlank
-     * @Assert\Email(
-     *     message = "The email '{{ value }}' is not a valid email.")
+     * @Assert\Email
      */
     private $email;
 
     /**
      * @ORM\Column(type="text")
+     * 
      * @Assert\NotBlank
-     * @Assert\Length(
-     *      min = 100,
-     *      minMessage = "Your content must be at least {{ limit }} characters long",
-     * )
+     * @Assert\Length(min=10)
      */
     private $content;
 
     /**
      * @ORM\Column(type="smallint")
+     * 
+     * @Assert\NotBlank
+     * @Assert\Choice({5, 4, 3, 2, 1})
+     * ou
+     * @Assert\Range(min=1, max=5)
      */
     private $rating;
 
     /**
      * @ORM\Column(type="json")
+     * 
+     * @Assert\NotBlank
+     * @Assert\Choice({"smile", "cry", "think", "sleep", "dream"}, multiple=true)
      */
     private $reactions = [];
-
+    
     /**
      * @ORM\Column(type="datetime")
      */

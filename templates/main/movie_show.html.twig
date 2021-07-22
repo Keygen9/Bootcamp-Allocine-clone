@@ -7,14 +7,8 @@
 {% block body %}
 
 	<div class="container">
-
-	
-<pre>
-	{{ dump(movie.duration|convert ) }}
-</pre>
-
 		<h1>{{ movie.title }}</h1>
-
+		<h3>{{ movie.duration|convert }}</h3>
 		{# Affichage des genres #}
 		<p>
 			{% for genre in movie.genres %}
@@ -33,7 +27,7 @@
 		<div class="container-fluid">
 			<div class="row">
 				{% for review in reviews %}
-					<div class="card mx-1 mb-3 w-75">
+					<div class="card mx-1 mb-3 w-100">
 						<div class="card-body">
 							<h5 class="card-title">{{review.username}}</h5>
 							<h6 class="card-subtitle mb-2 text-muted">Note :
@@ -42,10 +36,11 @@
 							<h6 class="card-subtitle mb-2 text-muted">Vu le :
 								{{(review.watchedAt|date('d/m/Y'))}}</h6>
 							<p class="card-text">{{review.content}}</p>
-                            Réaction :
-								{% for reaction in review.reactions %}
-								{{ reaction }} |
-								{% endfor %}
+							Réaction :
+							{% for reaction in review.reactions %}
+								{{ reaction }}
+								|
+							{% endfor %}
 						</div>
 					</div>
 				{% endfor %}
