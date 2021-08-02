@@ -8,12 +8,17 @@ use App\Repository\MovieRepository;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Event\LifecycleEventArgs;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Classe qui représente la table "movie" et ses enregistrements
  * 
  * @ORM\Entity(repositoryClass=MovieRepository::class)
+ * @UniqueEntity("title")
+ * @ORM\HasLifecycleCallbacks()
  */
 class Movie
 {
@@ -32,15 +37,22 @@ class Movie
      */
     private $id;
 
+     /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $slugger;
+
     /**
      * Titre
      * 
      * @ORM\Column(type="string", length=211)
+     * @Assert\NotBlank
+     * @Assert\Length(max = 211)
      */
     private $title;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime" )
      */
     private $createdAt;
 
@@ -51,37 +63,43 @@ class Movie
 
     /**
      * @ORM\ManyToMany(targetEntity=Genre::class, inversedBy="movies")
+     * @ORM\OrderBy({"name"="ASC"})
+     * @Assert\Count(min=1)
      */
     private $genres;
 
     /**
-     * @ORM\OneToMany(targetEntity=Casting::class, mappedBy="movie")
+     * @ORM\OneToMany(targetEntity=Casting::class, mappedBy="movie", cascade={"remove"})
      * @ORM\OrderBy({"creditOrder"="ASC"})
      */
     private $castings;
 
     /**
-     * @ORM\OneToMany(targetEntity=Review::class, mappedBy="movie")
+     * @ORM\OneToMany(targetEntity=Review::class, mappedBy="movie", orphanRemoval=true)
      */
     private $reviews;
 
     /**
      * @ORM\Column(type="date")
+     * @Assert\NotBlank
      */
     private $releaseDate;
 
     /**
      * @ORM\Column(type="smallint")
+     * @Assert\NotBlank
+     * @Assert\Positive
+     * @Assert\Range(min=1, max=2500)
      */
     private $duration;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $poster;
 
     /**
-     * @ORM\Column(type="smallint")
+     * @ORM\Column(type="smallint", nullable="true")
      */
     private $rating;
 
@@ -90,9 +108,11 @@ class Movie
      */
     private $teams;
 
+
     public function __construct()
     {
         $this->createdAt = new DateTime();
+        $this->releaseDate = new DateTime();
         $this->genres = new ArrayCollection();
         $this->castings = new ArrayCollection();
         $this->reviews = new ArrayCollection();
@@ -156,15 +176,11 @@ class Movie
     }
 
     /**
-     * Set the value of updatedAt
-     *
-     * @return  self
-     */ 
-    public function setUpdatedAt(DateTime $updatedAt)
+     * @ORM\PrePersist
+     */
+    public function setUpdatedAt(): void
     {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
+        $this->updatedAt = new \DateTime();
     }
 
     /**
@@ -280,7 +296,7 @@ class Movie
         return $this->poster;
     }
 
-    public function setPoster(string $poster): self
+    public function setPoster(?string $poster): self
     {
         $this->poster = $poster;
 
@@ -325,6 +341,18 @@ class Movie
                 $team->setMovie(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getSlugger(): ?string
+    {
+        return $this->slugger;
+    }
+
+    public function setSlugger(?string $slugger): self
+    {
+        $this->slugger = $slugger;
 
         return $this;
     }

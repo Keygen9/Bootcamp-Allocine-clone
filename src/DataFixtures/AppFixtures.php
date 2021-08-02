@@ -2,8 +2,8 @@
 
 namespace App\DataFixtures;
 
-use DateTime;
 use Faker;
+use App\Entity\User;
 use App\Entity\Genre;
 use App\Entity\Movie;
 use App\Entity\Person;
@@ -11,9 +11,17 @@ use App\Entity\Casting;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use App\DataFixtures\Provider\MovieDbProvider;
+use App\Service\Slugger;
 
 class AppFixtures extends Fixture
 {
+    private $slugger;
+
+    public function __construct(Slugger $slugger)
+    {
+        $this->slugger = $slugger;
+    }
+
     public function load(ObjectManager $manager)
     {
         // Créons une instance de Faker
@@ -25,6 +33,31 @@ class AppFixtures extends Fixture
 
         // Notre fournisseur de données, ajouté à Faker
         $faker->addProvider(new MovieDbProvider());
+
+        // 3 users "en dur" : USER, MANAGER, ADMIN
+        $user = new User();
+        $user->setEmail('user@user.com');
+        // user
+        $user->setPassword('$2y$13$h.eZWrS5PJya7zNMNsKcXe8LUSVBtN2PBy8WHxmdHgAFjHG/rW.dG');
+        $user->setRoles(['ROLE_USER']);
+
+        $manager->persist($user);
+
+        $admin = new User();
+        $admin->setEmail('admin@admin.com');
+        // user via "bin/console security:hash-password"
+        $admin->setPassword('$2y$13$VibctPTsjQG5iGN/BokaFuJa9oZDpt88a9s6TJ/vdd26EfcmUyAym');
+        $admin->setRoles(['ROLE_ADMIN']);
+
+        $manager->persist($admin);
+
+        $managers = new User();
+        $managers->setEmail('manager@manager.com');
+        // user via "bin/console security:hash-password"
+        $managers->setPassword('$2y$13$npbaA2iXBRt4SDOn.fMQuOmKUrbjbg0E7B1uDqPkdVEhIA3fVlCma');
+        $managers->setRoles(['ROLE_MANAGER']);
+
+        $manager->persist($managers);
 
         // 20 genres
         // créés avant les films car à associer depuis chaque film
@@ -48,10 +81,11 @@ class AppFixtures extends Fixture
         // dump($genresList);
 
         // 20 films
-
+        
         $moviesList = [];
-
+       
         for ($i = 1; $i <= 20; $i++) {
+
 
             $movie = new Movie();
             $movie->setTitle($faker->unique()->movieTitle());
@@ -59,6 +93,7 @@ class AppFixtures extends Fixture
             $movie->setPoster($faker->imageUrl(300, 400));
             $movie->setRating($faker->numberBetween(1, 5));
             $movie->setReleaseDate($faker->dateTimeBetween('-50 years'));
+            $movie->setSlugger($this->slugger->sluggerMovie($movie->getTitle()));
 
             // Association de 1 à 3 genres au hasard
             for ($r = 1; $r <= mt_rand(1, 3); $r++) {

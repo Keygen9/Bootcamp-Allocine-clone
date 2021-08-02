@@ -22,7 +22,24 @@ class GenreRepository extends ServiceEntityRepository
     // /**
     //  * @return Genre[] Returns an array of Genre objects
     //  */
+
+    /**
+     * Find all genres classées par titre ASC
+     */
+    public function findAllOrderedByNameAscQb()
+    {
+        // On crée un objet de type Query Builder, sur l'entité Movie
+        // 'm' = un alias pour l'entité Movie
+        return $this->createQueryBuilder('g')
+            ->orderBy('g.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+
     /*
+
+    
     public function findByExampleField($value)
     {
         return $this->createQueryBuilder('g')

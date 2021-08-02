@@ -1,0 +1,64 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Admin film
+	{{ movie.title }}
+{% endblock %}
+
+
+{% block body %}
+	<h2>Admin du film
+		<i>{{ movie.title }}</i>
+	</h2>
+
+	{% include "_flash_messages.html.twig" %}
+	
+	<div class="row my-5">
+		<div class="col-sm-12 col-md-5">
+			<img src="{{ movie.poster }}" alt="{{ movie.title }}" class="img-fluid"/>
+		</div>
+		<div class="col-sm-12 col-md-7">
+			<ul class="">
+				<li class="">
+					<strong>Title :</strong>
+					{{ movie.title }}
+				</li>
+
+				<li class="">
+					<strong>Release :</strong>
+					{{ movie.releaseDate | date('Y-d-m') }}
+				</li>
+
+				<li class="">
+					<strong>Duration :</strong>
+					{{ movie.duration|convert }}
+				</li>
+
+				<li class="">
+					<strong>Genre :</strong>
+					{% for genres in movie.genres %}
+						{{ genres.name }}{{ loop.last ? '' : ', ' }}
+					{% else %}
+						No genre availlable
+					{% endfor %}
+				</li>
+
+				<li class="">
+					<strong>Casting :</strong>
+					<ul>
+						{% for casting in movie.castings %}
+							<li>
+								<span class="text-decoration-underline">{{ casting.role }}</span>
+								:
+								<a href="{#{ path('app_actor_show',{'id': casting.person.id}) }#}">{{ casting.person.firstname }}
+									{{ casting.person.lastname }}</a>
+							</li>
+						{% else %}
+							<li>No casting availlable</li>
+						{% endfor %}
+					</ul>
+				</li>
+			</ul>
+
+		</div>
+	</div>
+{% endblock %}
