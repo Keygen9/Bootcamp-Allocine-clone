@@ -34,5 +34,18 @@ services:
             - { name: doctrine.orm.entity_listener , entity: 'App\Entity\Movie', event: prePersist }        
             - { name: doctrine.orm.entity_listener , entity: 'App\Entity\Movie', event: preUpdate }        
 
+
+        #     App\EventListener\MovieListener:
+        # tags:
+        #     -
+        #         # Ces 3 options sont nécessaires pour que ça fonctionne
+        #         name: 'doctrine.orm.entity_listener'
+        #         # Par défaut, le nom de la méthode appelée = nom de l'event
+        #         # On peut indiquer plusieurs types d'événements
+        #         event: 'prePersist, preUpdate'
+        #         entity: 'App\Entity\Movie'
+        #         # On peut indiquer le nom de la méthode si différente de l'event
+        #         method: 'slugify'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

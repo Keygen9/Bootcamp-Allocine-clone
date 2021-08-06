@@ -12,18 +12,41 @@ use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use App\DataFixtures\Provider\MovieDbProvider;
 use App\Service\Slugger;
+use Doctrine\DBAL\Connection;
 
 class AppFixtures extends Fixture
 {
     private $slugger;
+    private $dbal;
 
-    public function __construct(Slugger $slugger)
+    public function __construct(Slugger $slugger, Connection $dbal)
     {
         $this->slugger = $slugger;
+        $this->dbal = $dbal;
+    }
+
+    private function truncate()
+    {
+        // On passen mode SQL ! On cause avec MySQL
+        // Désactivation des contraintes FK
+        $this->dbal->executeQuery('SET foreign_key_checks = 0');
+        // On tronque
+        $this->dbal->executeQuery('TRUNCATE TABLE casting');
+        $this->dbal->executeQuery('TRUNCATE TABLE department');
+        $this->dbal->executeQuery('TRUNCATE TABLE genre');
+        $this->dbal->executeQuery('TRUNCATE TABLE job');
+        $this->dbal->executeQuery('TRUNCATE TABLE movie');
+        $this->dbal->executeQuery('TRUNCATE TABLE movie_genre');
+        $this->dbal->executeQuery('TRUNCATE TABLE person');
+        $this->dbal->executeQuery('TRUNCATE TABLE review');
+        $this->dbal->executeQuery('TRUNCATE TABLE team');
+        $this->dbal->executeQuery('TRUNCATE TABLE user');
+        // etc.
     }
 
     public function load(ObjectManager $manager)
     {
+        $this->truncate();
         // Créons une instance de Faker
         // (avec use Faker;)
         $faker = Faker\Factory::create('fr_FR');

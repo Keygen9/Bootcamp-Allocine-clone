@@ -85,7 +85,7 @@ class MovieController extends AbstractController
      * 
      * @Route("/back/movie/edit/{id<\d+>}", name="back_movie_edit", methods={"GET","POST"})
      */
-    public function edit(Request $request, Movie $movie, Slugger $slugger): Response
+    public function edit(Request $request, Movie $movie): Response
     {
         // 404 ?
         if ($movie === null) {

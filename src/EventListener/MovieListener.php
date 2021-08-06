@@ -24,6 +24,8 @@ class MovieListener
         $slugz = $this->slug->sluggerMovie($title);
 
         $moviez->setSlugger($slugz);
+
+        //$movie->setSlugger($this->slug->sluggerMovie($movie->getTitle()));
     }
 
     public function prePersist(Movie $movie, LifecycleEventArgs $event): void

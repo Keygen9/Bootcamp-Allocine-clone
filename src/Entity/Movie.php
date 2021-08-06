@@ -8,17 +8,22 @@ use App\Repository\MovieRepository;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Event\LifecycleEventArgs;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * Classe qui représente la table "movie" et ses enregistrements
  * 
  * @ORM\Entity(repositoryClass=MovieRepository::class)
- * @UniqueEntity("title")
+ * 
+ * Cette entité va réagir aux événements "lifecycle callbacks" de Doctrine
+ * https://symfony.com/doc/current/doctrine/events.html#doctrine-lifecycle-callbacks
  * @ORM\HasLifecycleCallbacks()
+ * 
+ * Unicité sur les propriétés $title
+ * @UniqueEntity("title")
  */
 class Movie
 {
@@ -34,25 +39,23 @@ class Movie
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups("movies_get")
      */
     private $id;
-
-     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     */
-    private $slugger;
 
     /**
      * Titre
      * 
-     * @ORM\Column(type="string", length=211)
+     * @ORM\Column(type="string", length=211, unique=true)
+     * 
      * @Assert\NotBlank
-     * @Assert\Length(max = 211)
+     * @Assert\Length(max=211)
+     * @Groups("movies_get")
      */
     private $title;
 
     /**
-     * @ORM\Column(type="datetime" )
+     * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
@@ -65,12 +68,14 @@ class Movie
      * @ORM\ManyToMany(targetEntity=Genre::class, inversedBy="movies")
      * @ORM\OrderBy({"name"="ASC"})
      * @Assert\Count(min=1)
+     * @Groups("movies_get")
      */
     private $genres;
 
     /**
      * @ORM\OneToMany(targetEntity=Casting::class, mappedBy="movie", cascade={"remove"})
      * @ORM\OrderBy({"creditOrder"="ASC"})
+     * @Groups("movies_get")
      */
     private $castings;
 
@@ -80,35 +85,49 @@ class Movie
     private $reviews;
 
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="datetime")
      * @Assert\NotBlank
+     * @Assert\DateTime
+     * @Groups("movies_get")
      */
     private $releaseDate;
 
     /**
      * @ORM\Column(type="smallint")
+     * 
      * @Assert\NotBlank
      * @Assert\Positive
-     * @Assert\Range(min=1, max=2500)
+     * @Assert\LessThanOrEqual(1440)
+     * @Groups("movies_get")
      */
     private $duration;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups("movies_get")
      */
     private $poster;
 
     /**
-     * @ORM\Column(type="smallint", nullable="true")
+     * @ORM\Column(type="smallint", nullable=true)
+     * @Groups("movies_get")
+     * @Assert\NotBlank
+     * @Assert\Type("int") 
+     * @Assert\Length(max = 1)
+     * @Assert\Choice({5, 4, 3, 2, 1}) 
+     * @Groups({"movies_get"})
      */
     private $rating;
 
     /**
-     * @ORM\OneToMany(targetEntity=Team::class, mappedBy="movie")
+     * @ORM\Column(type="string", length=211, unique=true)
+     * @Groups("movies_get")
      */
-    private $teams;
+    private $slugger;
 
-
+    /**
+     * Les valeur par défaut utiles
+     */
     public function __construct()
     {
         $this->createdAt = new DateTime();
@@ -116,7 +135,6 @@ class Movie
         $this->genres = new ArrayCollection();
         $this->castings = new ArrayCollection();
         $this->reviews = new ArrayCollection();
-        $this->teams = new ArrayCollection();
     }
 
     /**
@@ -176,11 +194,15 @@ class Movie
     }
 
     /**
-     * @ORM\PrePersist
-     */
-    public function setUpdatedAt(): void
+     * Set the value of updatedAt
+     *
+     * @return  self
+     */ 
+    public function setUpdatedAt(DateTime $updatedAt)
     {
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = $updatedAt;
+
+        return $this;
     }
 
     /**
@@ -267,12 +289,12 @@ class Movie
         return $this;
     }
 
-    public function getReleaseDate(): ?\DateTimeInterface
+    public function getReleaseDate(): ?\DateTime
     {
         return $this->releaseDate;
     }
 
-    public function setReleaseDate(\DateTimeInterface $releaseDate): self
+    public function setReleaseDate(\DateTime $releaseDate): self
     {
         $this->releaseDate = $releaseDate;
 
@@ -308,39 +330,9 @@ class Movie
         return $this->rating;
     }
 
-    public function setRating(int $rating): self
+    public function setRating(?int $rating): self
     {
         $this->rating = $rating;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Team[]
-     */
-    public function getTeams(): Collection
-    {
-        return $this->teams;
-    }
-
-    public function addTeam(Team $team): self
-    {
-        if (!$this->teams->contains($team)) {
-            $this->teams[] = $team;
-            $team->setMovie($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTeam(Team $team): self
-    {
-        if ($this->teams->removeElement($team)) {
-            // set the owning side to null (unless already changed)
-            if ($team->getMovie() === $this) {
-                $team->setMovie(null);
-            }
-        }
 
         return $this;
     }
@@ -350,10 +342,21 @@ class Movie
         return $this->slugger;
     }
 
-    public function setSlugger(?string $slugger): self
+    public function setSlugger(string $slugger): self
     {
         $this->slugger = $slugger;
 
         return $this;
     }
+
+    /**
+     * Exécute cette méthode avant l'update de l'entité en BDD
+     * /!\ Géré en interne par Doctrine
+     * @ORM\PreUpdate
+     */
+    public function setUpdatedAtValueToNow()
+    {
+        $this->updatedAt = new DateTime();
+    }
+
 }

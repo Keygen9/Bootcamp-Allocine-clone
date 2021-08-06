@@ -37,7 +37,7 @@
 
     <h2>Critiques</h2>
 
-    <p><a href="{{ path('review_add') }}" class="btn btn-primary">Ajouter une critique</a></p>
+    <p><a href="{{ path('movie_add_review', {id: movie.id}) }}" class="btn btn-primary">Ajouter une critique</a></p>
 
     {% for review in movie.reviews %}
     <div>
